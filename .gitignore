@@ -4,6 +4,7 @@ __pycache__/
 *$py.class
 *.env
 *node_modules
+*src/audio
 
 # C extensions
 *.so
