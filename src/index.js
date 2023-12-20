@@ -1,27 +1,21 @@
-const { Client, IntentsBitField } = require('discord.js')
+const { Client, IntentsBitField, Events } = require('discord.js')
+// const { joinVoiceChannel, getVoiceConnection, createAudioPlayer } = require('@discordjs/voice');
+const eventHandler = require('./handlers/eventHandler')
+
 require('dotenv').config()
 
-async function generateReply(message) {
-
-}
-
 const client = new Client({
+  partials: ['MESSAGE', 'CHANNEL', 'REACTION'],
   intents: [
     IntentsBitField.Flags.Guilds,
     IntentsBitField.Flags.GuildMembers,
     IntentsBitField.Flags.GuildMessages,
-    IntentsBitField.Flags.MessageContent
+    IntentsBitField.Flags.MessageContent,
+    IntentsBitField.Flags.DirectMessages,
+    IntentsBitField.Flags.DirectMessageTyping
   ],
 })
 
-client.on('ready', (bot) => {
-  console.log(`🔥${bot.user.tag} is online.`)
-})
+eventHandler(client);
 
-client.on('messageCreate', (message) => {
-
-})
-
-client.login(
-  process.env.BOT_TOKEN
-)
+client.login(process.env.BOT_TOKEN)
