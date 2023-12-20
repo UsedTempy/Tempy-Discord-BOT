@@ -6,3 +6,5 @@ The bot uses a bunch of different frame works to make a simple discord bot AI
 - `npm install discord.js`
 - `npm install @discordjs/voice`
 - `npm install dotenv`
+- `npm install @discordjs/voice libsodium-wrapers`
+- `npm install ffmpeg-static`
