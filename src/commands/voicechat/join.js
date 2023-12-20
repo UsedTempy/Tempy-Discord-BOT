@@ -1,5 +1,5 @@
 const { ApplicationCommandOptionType, PermissionFlagsBits } = require('discord.js')
-const { joinVoiceChannel, getVoiceConnection, createAudioPlayer, NoSubscriberBehavior } = require('@discordjs/voice');
+const { AudioPlayerStatus, joinVoiceChannel, getVoiceConnection, createAudioPlayer, NoSubscriberBehavior, createAudioResource } = require('@discordjs/voice');
 
 module.exports = {
     name: 'join',
@@ -30,18 +30,30 @@ module.exports = {
             channelId: interaction.options._hoistedOptions[0].value,
             guildId: interaction.commandGuildId,
             adapterCreator: channel.guild.voiceAdapterCreator,
-            selfDeaf: false
         })
 
-        const player = createAudioPlayer({
-            behaviors: {
-                noSubscriber: NoSubscriberBehavior.Pause,
-            },
-        });
+        const player = createAudioPlayer();
+        player.on(AudioPlayerStatus.Playing, () => {
+            console.log(`🎵 Audio player has started playing`)
+        })
 
-        connection.subscribe(player)
+        player.on('error', error => {
+            console.log(`❌ Error ${error} with resource`)
+        })
 
-        const resource = createAudioResource('../../../src/audio/Minecraft_Sheep_says_ambatukam_AI_COVER.mp3');
+        const resource = createAudioResource('C:\\Users\\Gebruiker\\Desktop\\GITHUB\\Tempy-Discord-BOT\\src\\audio\\Minecraft_Sheep_says_ambatukam_AI_COVER.wav')
         player.play(resource)
+
+        const subscription = connection.subscribe(player);
+        if (subscription) {
+            setTimeout(() => {
+                subscription.unsubscribe()
+            }, 15_000);
+        }
+
+        // connection.subscribe(player)
+
+        // const resource = createAudioResource('C:\Users\Gebruiker\Desktop\GITHUB\Tempy-Discord-BOT\src\audio\Minecraft_Sheep_says_ambatukam_AI_COVER.wav');
+        // player.play(resource)
     }
 }
