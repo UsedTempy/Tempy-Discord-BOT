@@ -30,11 +30,7 @@ module.exports = {
             channelId: interaction.options._hoistedOptions[0].value,
             guildId: interaction.commandGuildId,
             adapterCreator: channel.guild.voiceAdapterCreator,
+            selfDeaf: false,
         })
-
-        // const player = createAudioPlayer();
-        // const resource = createAudioResource('C:\\Users\\Gebruiker\\Desktop\\GITHUB\\Tempy-Discord-BOT\\src\\audio\\SheepMoan.wav')
-        // player.play(resource)
-        // connection.subscribe(player);
     }
 }

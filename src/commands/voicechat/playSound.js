@@ -2,10 +2,7 @@ const { ApplicationCommandOptionType, PermissionFlagsBits } = require('discord.j
 const { joinVoiceChannel, getVoiceConnection, createAudioPlayer, createAudioResource } = require('@discordjs/voice');
 
 const soundEffects = {
-    SheepMoan: {
-        location: 'C:\\Users\\Gebruiker\\Desktop\\GITHUB\\Tempy-Discord-BOT\\src\\audio\\SheepMoan.wav',
-        time: 15_000,
-    },
+    SheepMoan: createAudioResource('C:\\Users\\Gebruiker\\Desktop\\GIT\\Tempy-Discord-BOT\\src\\audio\\SheepMoan.wav')
 }
 
 module.exports = {
@@ -34,8 +31,7 @@ module.exports = {
             const SoundEffect = soundEffects[effectRequest];
 
             if (SoundEffect) {
-                const newAudioSource = createAudioResource(SoundEffect.location)
-                player.play(newAudioSource);
+                player.play(SoundEffect);
                 connection.subscribe(player);
             };
         } else {
