@@ -1,11 +1,22 @@
+const { ApplicationCommandOptionType, PermissionFlagsBits } = require('discord.js')
+
 module.exports = {
     name: 'join',
-    description: 'Join voice call',
+    description: 'Join voice call.',
     // devOnly: Boolean,
     // testOnly: Boolean,
-    // options: Object[],
+    options: [
+        {
+            name: 'vc-id',
+            description: 'The ID of the vc to join.',
+            required: true,
+            type: ApplicationCommandOptionType.Number,
+        },
+    ],
+    permissionsRequired: [PermissionFlagsBits.Administrator],
+    botPermissions: [PermissionFlagsBits.Administrator],
 
     callback: ( client, interaction) => {
-        interaction.reply(`Pong! ${client.ws.ping}ms`)
+        interaction.reply(`Connecting`)
     }
 }
