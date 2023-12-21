@@ -5,7 +5,7 @@ const eventHandler = require('./handlers/eventHandler')
 require('dotenv').config()
 
 const client = new Client({
-  partials: ['MESSAGE', 'CHANNEL', 'REACTION'],
+  partials: ['MESSAGE', 'CHANNEL', 'REACTION', 'CONNECT', 'SPEAK'],
   intents: [
     IntentsBitField.Flags.Guilds,
     IntentsBitField.Flags.GuildMembers,

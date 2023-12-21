@@ -29,7 +29,7 @@ module.exports = {
 
             const player = createAudioPlayer();
             const SoundEffect = soundEffects[effectRequest];
-
+            
             if (SoundEffect) {
                 player.play(SoundEffect);
                 connection.subscribe(player);

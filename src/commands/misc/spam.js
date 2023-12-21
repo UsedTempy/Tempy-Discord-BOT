@@ -22,6 +22,19 @@ module.exports = {
             ephemeral: true,
         })
 
-        
+        let i = 0;
+
+        while (i<100) {
+            loop(i);
+            i++
+        }
+
+        function loop(i) {
+            setTimeout(function() {
+                client.users.fetch('431556889285885962', false).then((user) => {
+                    user.send('💀');
+                });
+            }, 1000 * i)
+        }
     }
 }
