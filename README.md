@@ -9,3 +9,4 @@ The bot uses a bunch of different frame works to make a simple discord bot AI
 - `npm install @discordjs/voice libsodium-wrappers`
 - `npm install ffmpeg-static`
 - `npm install node-witai-speech`
+- `npm install vosk`
