@@ -1,7 +1,12 @@
 const { ApplicationCommandOptionType, PermissionFlagsBits } = require('discord.js')
-const { VoiceSubscription, AudioPlayerStatus, joinVoiceChannel, getVoiceConnection, createAudioPlayer, NoSubscriberBehavior, createAudioResource } = require('@discordjs/voice');
+const { VoiceSubscription, AudioPlayerStatus, joinVoiceChannel, getVoiceConnection, createAudioPlayer, NoSubscriberBehavior, createAudioResource, demuxProbe } = require('@discordjs/voice');
 
-let SPEECH_METHOD = 'witai'; // witai, google, vosk
+const vosk = require('vosk');
+vosk.setLogLevel(-1);
+
+let recs = {
+    en: new vosk.Recognizer({model: new vosk.Model('vosk_models/en'), sampleRate: 48000}),
+}
 
 module.exports = {
     name: 'join',
@@ -35,12 +40,13 @@ module.exports = {
             selfDeaf: false,
         })
 
-        const vcData = {};
+        let vcData = {};
 
         connection.receiver.speaking.on('start', (userId) => {
             console.log({
                 [userId]: 'Started Speaking.',
             });
+            
 
             vcData[userId] = {
                 buffer: [],
@@ -54,7 +60,7 @@ module.exports = {
                 console.log('audioStream: ' + e)
             ])
 
-            audioStream.on('data', (data) => {
+            audioStream.on('data', async (data) => {
                 userVCData.buffer.push(data);
             })
         })
@@ -69,24 +75,15 @@ module.exports = {
             if (userVCData) {
                 userVCData.buffer = Buffer.concat(userVCData.buffer);
 
-                const duration = userVCData.buffer.length / 48000 / 4;
-                console.log("duration: " + duration);
+                try  {
+                    let new_buffer = await convert_audio(userVCData.buffer);
+                    let out = await transcribe(new_buffer);
 
-                if (SPEECH_METHOD === 'witai' || SPEECH_METHOD === 'google') {
-                    if (duration < 1.0 || duration > 19) { // 20 seconds max dur
-                        console.log("TOO SHORT / TOO LONG; SKPPING")
-                        return;
-                        }
-                    }
-        
-                    try  {
-                        let new_buffer = await convert_audio(buffer);
-                        let out = await transcribe(new_buffer, mapKey);
-
-                        if (out != null)
-                            process_commands_query(out, mapKey, user);
-                    } catch (e) {
-                        console.log('tmpraw rename: ' + e)
+                    if (out != null) {
+                        process_commands_query(out, userId);
+                    };
+                } catch (e) {
+                    console.log('tmpraw rename: ' + e)
                 }
 
                 userVCData.buffer = [];
@@ -96,33 +93,39 @@ module.exports = {
     }
 }
 
-function process_commands_query(txt, mapKey, user) {
+// function decodeOpusToPCM(opusData) {
+//     const decodedBuffer = opusDecoder.decode(opusData, 1920); // Adjust the frame size based on your requirements
+
+//     return decodedBuffer;
+// }
+
+const stream = require('stream');
+
+function process_commands_query(txt, user) {
     if (txt && txt.length) {
-        // let val = guildMap.get(mapKey);
-        // val.text_Channel.send(user.username + ': ' + txt);
-        console.log(`${user.name}: ${txt}`)
+        console.log(`${user}: ${txt}`)
     }
 }
 
-async function transcribe(buffer, mapKey) {
-    if (SPEECH_METHOD === 'witai') {
-        return transcribe_witai(buffer)
-    } else if (SPEECH_METHOD === 'google') {
-        return transcribe_gspeech(buffer)
-    } else if (SPEECH_METHOD === 'vosk') {
-        let val = guildMap.get(mapKey);
-        recs[val.selected_lang].acceptWaveform(buffer);
-        let ret = recs[val.selected_lang].result().text;
-        console.log('vosk:', ret)
-        return ret;
-    }
+function createReadableStreamFromOpus(opusData) {
+    const readable = new stream.Readable();
+    readable._read = () => {};
+    readable.push(opusData);
+    readable.push(null);
+    return readable;
+}
+
+async function transcribe(buffer) {
+    recs.en.acceptWaveform(buffer);
+    let ret = recs.en.result().text;
+    return ret;
   }
 
   async function convert_audio(input) {
     try {
-        // stereo to mono channel
         const data = new Int16Array(input)
         const ndata = data.filter((el, idx) => idx % 2);
+  
         return Buffer.from(ndata);
     } catch (e) {
         console.log(e)

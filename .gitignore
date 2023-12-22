@@ -5,6 +5,7 @@ __pycache__/
 *.env
 *node_modules
 *src/audio
+*vosk_models
 
 # C extensions
 *.so
