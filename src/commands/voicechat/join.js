@@ -1,12 +1,8 @@
 const { ApplicationCommandOptionType, PermissionFlagsBits } = require('discord.js')
 const { VoiceSubscription, AudioPlayerStatus, joinVoiceChannel, getVoiceConnection, createAudioPlayer, NoSubscriberBehavior, createAudioResource, demuxProbe } = require('@discordjs/voice');
 
-const vosk = require('vosk');
-vosk.setLogLevel(-1);
-
-let recs = {
-    en: new vosk.Recognizer({model: new vosk.Model('vosk_models/en'), sampleRate: 48000}),
-}
+const fs = require('fs');
+const { Model, Recognizer } = require('vosk');
 
 module.exports = {
     name: 'join',
@@ -46,7 +42,6 @@ module.exports = {
             console.log({
                 [userId]: 'Started Speaking.',
             });
-            
 
             vcData[userId] = {
                 buffer: [],
@@ -60,7 +55,7 @@ module.exports = {
                 console.log('audioStream: ' + e)
             ])
 
-            audioStream.on('data', async (data) => {
+            audioStream.on('data', (data) => {
                 userVCData.buffer.push(data);
             })
         })
@@ -76,12 +71,15 @@ module.exports = {
                 userVCData.buffer = Buffer.concat(userVCData.buffer);
 
                 try  {
-                    let new_buffer = await convert_audio(userVCData.buffer);
-                    let out = await transcribe(new_buffer);
+                    // let new_buffer = await convert_audio(userVCData.buffer);
+                    // transcribe(userVCData.buffer)
+                    //     .then(transcription => console.log('Transcription:', transcription))
+                    //     .catch(error => console.error('Error during transcription:', error.message));
+                    // let out = await transcribe(new_buffer);
 
-                    if (out != null) {
-                        process_commands_query(out, userId);
-                    };
+                    // if (out != null) {
+                    //     process_commands_query(out, userId);
+                    // };
                 } catch (e) {
                     console.log('tmpraw rename: ' + e)
                 }
@@ -99,37 +97,37 @@ module.exports = {
 //     return decodedBuffer;
 // }
 
-const stream = require('stream');
+// const stream = require('stream');
 
-function process_commands_query(txt, user) {
-    if (txt && txt.length) {
-        console.log(`${user}: ${txt}`)
-    }
-}
+// function process_commands_query(txt, user) {
+//     if (txt && txt.length) {
+//         console.log(`${user}: ${txt}`)
+//     }
+// }
 
-function createReadableStreamFromOpus(opusData) {
-    const readable = new stream.Readable();
-    readable._read = () => {};
-    readable.push(opusData);
-    readable.push(null);
-    return readable;
-}
+// function createReadableStreamFromOpus(opusData) {
+//     const readable = new stream.Readable();
+//     readable._read = () => {};
+//     readable.push(opusData);
+//     readable.push(null);
+//     return readable;
+// }
 
-async function transcribe(buffer) {
-    recs.en.acceptWaveform(buffer);
-    let ret = recs.en.result().text;
-    return ret;
-  }
+// async function transcribe(buffer) {
+//     recs.en.acceptWaveform(buffer);
+//     let ret = recs.en.result().text;
+//     return ret;
+//   }
 
-  async function convert_audio(input) {
-    try {
-        const data = new Int16Array(input)
-        const ndata = data.filter((el, idx) => idx % 2);
+//   async function convert_audio(input) {
+//     try {
+//         const data = new Int16Array(input)
+//         const ndata = data.filter((el, idx) => idx % 2);
   
-        return Buffer.from(ndata);
-    } catch (e) {
-        console.log(e)
-        console.log('convert_audio: ' + e)
-        throw e;
-    }
-}
+//         return Buffer.from(ndata);
+//     } catch (e) {
+//         console.log(e)
+//         console.log('convert_audio: ' + e)
+//         throw e;
+//     }
+// }
