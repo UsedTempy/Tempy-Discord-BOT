@@ -116,35 +116,8 @@ module.exports = {
     }
 }
 
-// deepgram.transcription.preRecorded(
-//     { url: 'https://static.deepgram.com/examples/deep-learning-podcast-clip.wav' },
-//     { punctuate: true }
-// ).then(data => {
-//     console.log(data, { depth: null })
-// })
-
-// const transcribeUrl = async () => {
-    // const deepgram = createClient(process.env.SPEECH_TO_TEXT_SECRET);
-
-    // const { result, error } = await deepgram.listen.prerecorded.transcribeFile(
-    //     fs.readFileSync('C:\\Users\\Gebruiker\\Desktop\\GIT\\Tempy-Discord-BOT\\src\\audio\\SamASMR.mp3'),
-    //     {
-    //       smart_format: true,
-    //       model: "nova",
-    //     }
-    //   );
-  
-    // if (error) throw error;
-    // if (!error) console.dir(result, { depth: null });
-//   };
-
-//   transcribeUrl()
-
 async function convertAudioToText(audioFilePath) {
     const deepgram = createClient(process.env.SPEECH_TO_TEXT_SECRET);
-    // console.log(fs.readFileSync('C:\\Users\\Gebruiker\\Desktop\\GIT\\Tempy-Discord-BOT\\src\\audio\\SamASMR.mp3'));
-    // console.log(Buffer.from(decodedAudioData, 'utf-8'));
-
     const audioFile = await fs.readFileSync(audioFilePath)
 
     const { result, error } = await deepgram.listen.prerecorded.transcribeFile(
@@ -160,58 +133,3 @@ async function convertAudioToText(audioFilePath) {
         return result
     };
 }
-
-//     try {
-//         const response = await axios.post('https://api.deepgram.com/v1/listen', {
-//             audio: {
-//                 data: decodedAudioData.toString('base64'),
-//             },
-//         }, {
-//             headers: {
-//                 Authorization: `Token ${process.env.SPEECH_TO_TEXT_KEY}`,
-//                 "Content-Type": 'application/json',
-//             },
-//         });
-
-//         // Extract and return the transcription from the Deepgram response
-//         return response.data.results[0].alternatives[0].transcript;
-
-//     } catch (error) {
-//         throw new Error(`Deepgram API error: ${error.message}`);
-//     }
-// }
-
-// async function transcribe(buffer) {
-//     recs.en.acceptWaveform(buffer);
-//     let ret = recs.en.result().text;
-//     return ret;
-// }
-
-// const stream = require('stream');
-
-// function process_commands_query(txt, user) {
-//     if (txt && txt.length) {
-//         console.log(`${user}: ${txt}`)
-//     }
-// }
-
-// function createReadableStreamFromOpus(opusData) {
-//     const readable = new stream.Readable();
-//     readable._read = () => {};
-//     readable.push(opusData);
-//     readable.push(null);
-//     return readable;
-// }
-
-// async function convert_audio(input) {
-//     try {
-//         const data = new Int16Array(input)
-//         const ndata = data.filter((el, idx) => idx % 2);
-  
-//         return Buffer.from(input);
-//     } catch (e) {
-//         console.log(e)
-//         console.log('convert_audio: ' + e)
-//         throw e;
-//     }
-// }
