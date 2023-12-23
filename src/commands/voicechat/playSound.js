@@ -2,7 +2,10 @@ const { ApplicationCommandOptionType, PermissionFlagsBits } = require('discord.j
 const { joinVoiceChannel, getVoiceConnection, createAudioPlayer, createAudioResource } = require('@discordjs/voice');
 
 const soundEffects = {
-    SheepMoan: createAudioResource('C:\\Users\\Gebruiker\\Desktop\\GIT\\Tempy-Discord-BOT\\src\\audio\\SheepMoan.wav')
+    SheepMoan: 'C:\\Users\\Gebruiker\\Desktop\\GIT\\Tempy-Discord-BOT\\src\\audio\\SheepMoan.wav',
+    SamL: 'C:\\Users\\Gebruiker\\Desktop\\GIT\\Tempy-Discord-BOT\\src\\audio\\SamLikesHisUncle.mp3',
+    FlyesSanta: 'C:\\Users\\Gebruiker\\Desktop\\GIT\\Tempy-Discord-BOT\\src\\audio\\SantaFlyes.mp3',
+    SamAMR: 'C:\\Users\\Gebruiker\\Desktop\\GIT\\Tempy-Discord-BOT\\src\\audio\\SamASMR.mp3'
 }
 
 module.exports = {
@@ -23,12 +26,16 @@ module.exports = {
 
     callback: async ( client, interaction) => {
         const connection = getVoiceConnection(interaction.commandGuildId);
+        const effectRequest = interaction.options._hoistedOptions[0].value;
+
+        interaction.reply({
+            content: `Played sound: ${effectRequest}`,
+            ephemeral: true,
+        })
 
         if (connection) {
-            const effectRequest = interaction.options._hoistedOptions[0].value;
-
             const player = createAudioPlayer();
-            const SoundEffect = soundEffects[effectRequest];
+            const SoundEffect = createAudioResource(soundEffects[effectRequest]);
             
             if (SoundEffect) {
                 player.play(SoundEffect);

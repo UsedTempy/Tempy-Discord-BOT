@@ -1,8 +1,30 @@
 const { ApplicationCommandOptionType, PermissionFlagsBits } = require('discord.js')
 const { VoiceSubscription, AudioPlayerStatus, joinVoiceChannel, getVoiceConnection, createAudioPlayer, NoSubscriberBehavior, createAudioResource, demuxProbe } = require('@discordjs/voice');
+const { createClient } = require('@deepgram/sdk') //from "@deepgram/sdk";
+const { OpusEncoder } = require( "@discordjs/opus" )
 
 const fs = require('fs');
-const { Model, Recognizer } = require('vosk');
+const path = require('path');
+const wav = require('wav')
+
+async function saveBufferAsWavFile(buffer, filePath) {
+    try {
+      const fileWriter = new wav.FileWriter(filePath, {
+        channels: 2,          // Assuming mono audio, change to 2 for stereo
+        sampleRate: 48000,    // Adjust based on your audio data
+        bitDepth: 16,         // Adjust based on your audio data
+      });
+  
+      fileWriter.write(buffer);
+      fileWriter.end();
+
+      console.log('WAV file saved successfully:', filePath);
+    
+      return filePath;
+    } catch (error) {
+      console.error('Error saving WAV file:', error.message);
+    }
+}
 
 module.exports = {
     name: 'join',
@@ -55,9 +77,8 @@ module.exports = {
                 console.log('audioStream: ' + e)
             ])
 
-            audioStream.on('data', (data) => {
-                userVCData.buffer.push(data);
-            })
+            const encoder = new OpusEncoder( 48000, 2 );
+            audioStream.on('data', chunk => { userVCData.buffer.push( encoder.decode( chunk ) ) })
         })
 
         connection.receiver.speaking.on('end', async (userId) => {
@@ -68,18 +89,22 @@ module.exports = {
             const userVCData = vcData[userId]
 
             if (userVCData) {
-                userVCData.buffer = Buffer.concat(userVCData.buffer);
-
                 try  {
-                    // let new_buffer = await convert_audio(userVCData.buffer);
-                    // transcribe(userVCData.buffer)
-                    //     .then(transcription => console.log('Transcription:', transcription))
-                    //     .catch(error => console.error('Error during transcription:', error.message));
-                    // let out = await transcribe(new_buffer);
+                    userVCData.buffer = Buffer.concat(userVCData.buffer);
+                    const user = client.users.cache.find(u => u.id === userId)
+                    if (!user) return;
+                    
+                    const filePath = `C:\\Users\\Gebruiker\\Desktop\\GIT\\Tempy-Discord-BOT\\buffer_audio_requests\\${userId}_output.wav`
+                    const newCreatedFile = await saveBufferAsWavFile(userVCData.buffer, filePath); // Loads the audio
+                    setTimeout(async callback => {
+                        const out = await convertAudioToText(newCreatedFile)
 
-                    // if (out != null) {
-                    //     process_commands_query(out, userId);
-                    // };
+                        if (out != null) {
+                            console.log({
+                                [user.globalName]: out.results.channels[0].alternatives[0].transcript
+                            });
+                        };
+                    }, 250)
                 } catch (e) {
                     console.log('tmpraw rename: ' + e)
                 }
@@ -91,10 +116,75 @@ module.exports = {
     }
 }
 
-// function decodeOpusToPCM(opusData) {
-//     const decodedBuffer = opusDecoder.decode(opusData, 1920); // Adjust the frame size based on your requirements
+// deepgram.transcription.preRecorded(
+//     { url: 'https://static.deepgram.com/examples/deep-learning-podcast-clip.wav' },
+//     { punctuate: true }
+// ).then(data => {
+//     console.log(data, { depth: null })
+// })
 
-//     return decodedBuffer;
+// const transcribeUrl = async () => {
+    // const deepgram = createClient(process.env.SPEECH_TO_TEXT_SECRET);
+
+    // const { result, error } = await deepgram.listen.prerecorded.transcribeFile(
+    //     fs.readFileSync('C:\\Users\\Gebruiker\\Desktop\\GIT\\Tempy-Discord-BOT\\src\\audio\\SamASMR.mp3'),
+    //     {
+    //       smart_format: true,
+    //       model: "nova",
+    //     }
+    //   );
+  
+    // if (error) throw error;
+    // if (!error) console.dir(result, { depth: null });
+//   };
+
+//   transcribeUrl()
+
+async function convertAudioToText(audioFilePath) {
+    const deepgram = createClient(process.env.SPEECH_TO_TEXT_SECRET);
+    // console.log(fs.readFileSync('C:\\Users\\Gebruiker\\Desktop\\GIT\\Tempy-Discord-BOT\\src\\audio\\SamASMR.mp3'));
+    // console.log(Buffer.from(decodedAudioData, 'utf-8'));
+
+    const audioFile = await fs.readFileSync(audioFilePath)
+
+    const { result, error } = await deepgram.listen.prerecorded.transcribeFile(
+        audioFile,
+        {
+            smart_format: true,
+            model: "nova",
+        }
+    )
+
+    if (error) throw error;
+    if (!error) {
+        return result
+    };
+}
+
+//     try {
+//         const response = await axios.post('https://api.deepgram.com/v1/listen', {
+//             audio: {
+//                 data: decodedAudioData.toString('base64'),
+//             },
+//         }, {
+//             headers: {
+//                 Authorization: `Token ${process.env.SPEECH_TO_TEXT_KEY}`,
+//                 "Content-Type": 'application/json',
+//             },
+//         });
+
+//         // Extract and return the transcription from the Deepgram response
+//         return response.data.results[0].alternatives[0].transcript;
+
+//     } catch (error) {
+//         throw new Error(`Deepgram API error: ${error.message}`);
+//     }
+// }
+
+// async function transcribe(buffer) {
+//     recs.en.acceptWaveform(buffer);
+//     let ret = recs.en.result().text;
+//     return ret;
 // }
 
 // const stream = require('stream');
@@ -113,18 +203,12 @@ module.exports = {
 //     return readable;
 // }
 
-// async function transcribe(buffer) {
-//     recs.en.acceptWaveform(buffer);
-//     let ret = recs.en.result().text;
-//     return ret;
-//   }
-
-//   async function convert_audio(input) {
+// async function convert_audio(input) {
 //     try {
 //         const data = new Int16Array(input)
 //         const ndata = data.filter((el, idx) => idx % 2);
   
-//         return Buffer.from(ndata);
+//         return Buffer.from(input);
 //     } catch (e) {
 //         console.log(e)
 //         console.log('convert_audio: ' + e)
