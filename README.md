@@ -10,6 +10,4 @@ The bot uses a bunch of different frame works to make a simple discord bot AI
 - `npm install ffmpeg-static`
 - `npm install node-witai-speech`
 - `npm install vosk`
-- `npm install opusscript`
-- `npm install @discordjs/voice prism-media`
-- `npm install opus-to-pcm`
+- `npm install fluent-ffmpeg`
