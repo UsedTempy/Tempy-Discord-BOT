@@ -7,8 +7,8 @@ module.exports = {
     // devOnly: Boolean,
     // testOnly: Boolean,
     // options: Object [],
-    permissionsRequired: [PermissionFlagsBits.Administrator],
-    botPermissions: [PermissionFlagsBits.Administrator],
+    permissionsRequired: [PermissionFlagsBits.BanMembers],
+    botPermissions: [PermissionFlagsBits.BanMembers],
 
     callback: async ( client, interaction) => {
         interaction.reply({

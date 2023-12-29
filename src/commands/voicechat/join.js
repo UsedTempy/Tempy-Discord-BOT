@@ -1,11 +1,47 @@
 const { ApplicationCommandOptionType, PermissionFlagsBits } = require('discord.js')
 const { VoiceSubscription, AudioPlayerStatus, joinVoiceChannel, getVoiceConnection, createAudioPlayer, NoSubscriberBehavior, createAudioResource, demuxProbe } = require('@discordjs/voice');
-const { createClient } = require('@deepgram/sdk') //from "@deepgram/sdk";
+const { HarmBlockThreshold, HarmCategory, GoogleGenerativeAI } = require('@google/generative-ai')
+const { createClient } = require('@deepgram/sdk')
 const { OpusEncoder } = require( "@discordjs/opus" )
 
-const fs = require('fs');
+const fs = require('fs-extra');
 const path = require('path');
-const wav = require('wav')
+const wav = require('wav');
+const axios = require('axios');
+
+const ElevenLabs = require("elevenlabs-node");
+let audioIndex = 1;
+
+const LANGUAGE_MODEL_API_KEY = process.env.AI_TOKEN
+const LANGUAGE_MODEL_URL = `https://generativelanguage.googleapis.com/v1beta1/models/chat-bison-001:generateMessage?key=${LANGUAGE_MODEL_API_KEY}`
+
+const voice = new ElevenLabs({
+    apiKey: process.env.ELEVEN_LABS_API, // Your API key from Elevenlabs
+    voiceId: "pNInz6obpgDQGcFmaJgB", // A Voice ID from Elevenlabs
+});
+
+async function generateGoogleResponse(speech_res) {
+    const payload = {
+        prompt: { messages: [{ content: speech_res }] },
+        temperature: 0.9,
+        candidate_count: 1,
+    }
+
+    try {
+        const response = await axios({
+            method: "post",
+            url: LANGUAGE_MODEL_URL,
+            data: JSON.stringify(payload),
+            headers: {
+              "Content-Type": "application/json",
+            }
+        })
+
+        return response.data.candidates[0].content
+    } catch {
+        return false;
+    }
+}
 
 async function saveBufferAsWavFile(buffer, filePath) {
     try {
@@ -42,7 +78,7 @@ module.exports = {
     permissionsRequired: [PermissionFlagsBits.Administrator],
     botPermissions: [PermissionFlagsBits.Administrator],
 
-    callback: async ( client, interaction) => {
+    callback: async (client, interaction) => {
         interaction.reply({
             content: `Please wait i'm connecting.`,
             ephemeral: true,
@@ -61,9 +97,11 @@ module.exports = {
         let vcData = {};
 
         connection.receiver.speaking.on('start', (userId) => {
-            console.log({
-                [userId]: 'Started Speaking.',
-            });
+            if (userId != 743907261402841188) return;
+
+            // console.log({
+            //     [userId]: 'Started Speaking.',
+            // });
 
             vcData[userId] = {
                 buffer: [],
@@ -82,9 +120,11 @@ module.exports = {
         })
 
         connection.receiver.speaking.on('end', async (userId) => {
-            console.log({
-                [userId]: 'Stopped Speaking.',
-            });
+            if (userId != 743907261402841188) return;
+
+            // console.log({
+            //     [userId]: 'Stopped Speaking.',
+            // });
 
             const userVCData = vcData[userId]
 
@@ -96,14 +136,24 @@ module.exports = {
                     
                     const filePath = `C:\\Users\\Gebruiker\\Desktop\\GIT\\Tempy-Discord-BOT\\buffer_audio_requests\\${userId}_output.wav`
                     const newCreatedFile = await saveBufferAsWavFile(userVCData.buffer, filePath); // Loads the audio
-                    setTimeout(async callback => {
-                        const out = await convertAudioToText(newCreatedFile)
+                    setTimeout(async () => {
+                        try {
+                            const out = await convertAudioToText(newCreatedFile)
+                            
+                            if (out != null) {
+                                const speech_res = out.results.channels[0].alternatives[0].transcript;
+                                const ai_res = await generateGoogleResponse(speech_res);
+                                console.log(ai_res);
+                                // textToVoice(connection, ai_res);
 
-                        if (out != null) {
-                            console.log({
-                                [user.globalName]: out.results.channels[0].alternatives[0].transcript
-                            });
-                        };
+                                // console.log(`${user.globalName}: ${speech_res}`);
+
+                                // const res = await chat.sendAndAwaitResponse(speech_res, true);
+                                // textToVoice(connection, response.text());
+                            };
+                        } catch(e) {
+                            console.log(e);
+                        }
                     }, 250)
                 } catch (e) {
                     console.log('tmpraw rename: ' + e)
@@ -132,4 +182,32 @@ async function convertAudioToText(audioFilePath) {
     if (!error) {
         return result
     };
+}
+
+async function textToVoice(connection, textToSpeech) {
+    const voiceResponse = voice.textToSpeechStream({
+        // Required Parameters
+        textInput:       textToSpeech,                // The text you wish to convert to speech
+    
+        // Optional Parameters
+        voiceId:         "z9fAnlkpzviPz146aGWa",         // A different Voice ID from the default
+        stability:       0.5,                            // The stability for the converted speech
+        similarityBoost: 0.5,                            // The similarity boost for the converted speech
+        modelId:         "eleven_multilingual_v1",       // The ElevenLabs Model ID
+        style:           1,                              // The style exaggeration for the converted speech
+        responseType:    "stream"
+      }).then(async (res) => {
+        const newFilePath = `C:\\Users\\Gebruiker\\Desktop\\GIT\\Tempy-Discord-BOT\\buffer_send_audio\\audio_${audioIndex}.mp3`
+        res.pipe(fs.createWriteStream(newFilePath));
+
+        setTimeout(() => {
+            const player = createAudioPlayer();
+            const SoundEffect = createAudioResource(newFilePath);
+            
+            if (SoundEffect) {
+                player.play(SoundEffect);
+                connection.subscribe(player);
+            };
+        }, 1000)
+    });
 }
