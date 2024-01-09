@@ -20,28 +20,28 @@ const voice = new ElevenLabs({
     voiceId: "pNInz6obpgDQGcFmaJgB", // A Voice ID from Elevenlabs
 });
 
-async function generateGoogleResponse(speech_res) {
-    const payload = {
-        prompt: { messages: [{ content: speech_res }] },
-        temperature: 0.9,
-        candidate_count: 1,
-    }
+// async function generateGoogleResponse(speech_res) {
+//     const payload = {
+//         prompt: { messages: [{ content: speech_res }] },
+//         temperature: 0.9,
+//         candidate_count: 1,
+//     }
 
-    try {
-        const response = await axios({
-            method: "post",
-            url: LANGUAGE_MODEL_URL,
-            data: JSON.stringify(payload),
-            headers: {
-              "Content-Type": "application/json",
-            }
-        })
+//     try {
+//         const response = await axios({
+//             method: "post",
+//             url: LANGUAGE_MODEL_URL,
+//             data: JSON.stringify(payload),
+//             headers: {
+//               "Content-Type": "application/json",
+//             }
+//         })
 
-        return response.data.candidates[0].content
-    } catch {
-        return false;
-    }
-}
+//         return response.data.candidates[0].content
+//     } catch {
+//         return false;
+//     }
+// }
 
 async function saveBufferAsWavFile(buffer, filePath) {
     try {
@@ -97,7 +97,7 @@ module.exports = {
         let vcData = {};
 
         connection.receiver.speaking.on('start', (userId) => {
-            if (userId != 743907261402841188) return;
+            if (userId != 1) return;
 
             // console.log({
             //     [userId]: 'Started Speaking.',
@@ -120,7 +120,7 @@ module.exports = {
         })
 
         connection.receiver.speaking.on('end', async (userId) => {
-            if (userId != 743907261402841188) return;
+            if (userId != 1) return;
 
             // console.log({
             //     [userId]: 'Stopped Speaking.',
@@ -142,8 +142,8 @@ module.exports = {
                             
                             if (out != null) {
                                 const speech_res = out.results.channels[0].alternatives[0].transcript;
-                                const ai_res = await generateGoogleResponse(speech_res);
-                                console.log(ai_res);
+                                // const ai_res = await generateGoogleResponse(speech_res);
+                                // console.log(ai_res);
                                 // textToVoice(connection, ai_res);
 
                                 // console.log(`${user.globalName}: ${speech_res}`);
@@ -198,16 +198,14 @@ async function textToVoice(connection, textToSpeech) {
         responseType:    "stream"
       }).then(async (res) => {
         const newFilePath = `C:\\Users\\Gebruiker\\Desktop\\GIT\\Tempy-Discord-BOT\\buffer_send_audio\\audio_${audioIndex}.mp3`
-        res.pipe(fs.createWriteStream(newFilePath));
-
-        setTimeout(() => {
+        res.pipe(fs.createWriteStream(newFilePath)).on('finish', async () => {
             const player = createAudioPlayer();
             const SoundEffect = createAudioResource(newFilePath);
-            
+        
             if (SoundEffect) {
                 player.play(SoundEffect);
                 connection.subscribe(player);
-            };
-        }, 1000)
+            }; 
+        });
     });
 }
