@@ -1,5 +1,5 @@
 const { ApplicationCommandOptionType, PermissionFlagsBits } = require('discord.js')
-const { joinVoiceChannel, getVoiceConnection, createAudioPlayer, createAudioResource } = require('@discordjs/voice');
+const { joinVoiceChannel, getVoiceConnection, createAudioPlayer, createAudioResource, AudioPlayerStatus } = require('@discordjs/voice');
 const axios = require('axios')
 const requests = require('requests')
 
@@ -10,6 +10,14 @@ const voice = new ElevenLabs({
     apiKey: process.env.ELEVEN_LABS_API, // Your API key from Elevenlabs
     voiceId: "pNInz6obpgDQGcFmaJgB", // A Voice ID from Elevenlabs
 });
+
+function getDuration(src, cb) {
+    var audio = new Audio();
+    $(audio).on("loadedmetadata", function(){
+        cb(audio.duration);
+    });
+    audio.src = src;
+}
 
 module.exports = {
     name: 'speak',
@@ -49,7 +57,8 @@ module.exports = {
                 style:           1,                              // The style exaggeration for the converted speech
                 responseType:    "stream"
               }).then(async (res) => {
-                const newFilePath = `C:\\Users\\Gebruiker\\Desktop\\GIT\\Tempy-Discord-BOT\\buffer_send_audio\\audio_SoundEffect.mp3`
+                // const newFilePath = `../../../buffer_send_audio/audio_SoundEffect.mp3`
+                const newFilePath = `C:\\Users\\Gebruiker\\Desktop\\GITHUB\\Tempy-Discord-BOT\\buffer_send_audio/audio_SoundEffect.mp3`
                 res.pipe(fs.createWriteStream(newFilePath));
 
                 const player = createAudioPlayer();
@@ -58,20 +67,26 @@ module.exports = {
                 if (SoundEffect) {
                     player.play(SoundEffect);
                     connection.subscribe(player);
+                    // getDuration(newFilePath, function(length){
+                    //     console.log(length)
+                    // })
 
-                    player.addListener("stateChange", (oldOne, newOne) => {
-                        if (newOne.status == "idle") {
-                            setTimeout(data => {
-                                fs.unlink(newFilePath, (err) => {
-                                    if (err) {
-                                        console.error('Error deleting file:', err);
-                                    } else {
-                                        console.log('File deleted successfully.');
-                                    }
-                                });
-                            }, 1000)
-                        }
-                    });
+                    var x = newFilePath.duration
+                    console.log(x);
+
+                    // player.addListener("stateChange", (oldOne, newOne) => {
+                    //     if (newOne.status == "idle") {
+                    //         setTimeout(data => {
+                    //             fs.unlink(newFilePath, (err) => {
+                    //                 if (err) {
+                    //                     console.error('Error deleting file:', err);
+                    //                 } else {
+                    //                     console.log('File deleted successfully.');
+                    //                 }
+                    //             });
+                    //         }, 1000)
+                    //     }
+                    // });
                 };
             });
         } else {
