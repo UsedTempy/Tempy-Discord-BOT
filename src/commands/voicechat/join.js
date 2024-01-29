@@ -137,7 +137,7 @@ module.exports = {
                     const user = client.users.cache.find(u => u.id === userId)
                     if (!user) return;
                     
-                    const filePath = `C:\\Users\\Gebruiker\\Desktop\\GIT\\Tempy-Discord-BOT\\buffer_audio_requests\\${userId}_output.wav`
+                    const filePath = `C:\\Users\\Gebruiker\\Desktop\\GITHUB\\Tempy-Discord-BOT\|buffer_audio_requests/${userId}_output.wav`
                     const newCreatedFile = await saveBufferAsWavFile(userVCData.buffer, filePath); // Loads the audio
                     setTimeout(async () => {
                         try {
