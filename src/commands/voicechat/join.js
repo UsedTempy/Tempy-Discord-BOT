@@ -11,6 +11,10 @@ const axios = require('axios');
 
 const ElevenLabs = require("elevenlabs-node");
 let audioIndex = 1;
+const stringArray = [];
+
+const CharacterAI = require("node_characterai");
+const characterAI = new CharacterAI();
 
 const LANGUAGE_MODEL_API_KEY = process.env.AI_TOKEN
 const LANGUAGE_MODEL_URL = `https://generativelanguage.googleapis.com/v1beta1/models/chat-bison-001:generateMessage?key=${LANGUAGE_MODEL_API_KEY}`
@@ -20,28 +24,33 @@ const voice = new ElevenLabs({
     voiceId: "pNInz6obpgDQGcFmaJgB", // A Voice ID from Elevenlabs
 });
 
-// async function generateGoogleResponse(speech_res) {
-//     const payload = {
-//         prompt: { messages: [{ content: speech_res }] },
-//         temperature: 0.9,
-//         candidate_count: 1,
-//     }
+async function removeStars(inputString) {
+    return inputString.replace(/\*/g, '');
+}
 
-//     try {
-//         const response = await axios({
-//             method: "post",
-//             url: LANGUAGE_MODEL_URL,
-//             data: JSON.stringify(payload),
-//             headers: {
-//               "Content-Type": "application/json",
-//             }
-//         })
+async function handleStrings(connection, chat) {
+    while (stringArray.length > 0) {
+        const currentString = stringArray[0];
 
-//         return response.data.candidates[0].content
-//     } catch {
-//         return false;
-//     }
-// }
+        if (typeof currentString == "string" || currentString.length > 1) {
+            const ai_res = await chat.sendAndAwaitResponse(currentString, true);
+            await textToVoice(connection, await removeStars(ai_res.text));
+        }
+
+        stringArray.shift();
+    }
+}
+
+function pushString(connection, chat, string) {
+    stringArray.push(string);
+
+    if (!handleStrings.running) {
+        handleStrings.running = true;
+        handleStrings(connection, chat).finally(() => {
+            handleStrings.running = false;
+        });
+    }
+}
 
 async function saveBufferAsWavFile(buffer, filePath) {
     try {
@@ -87,6 +96,11 @@ module.exports = {
         const voiceChatId = interaction.options._hoistedOptions[0].value
         const channel = await client.channels.fetch(voiceChatId)
 
+        await characterAI.authenticateAsGuest("Bearer" + process.env.NODE_CAI)
+
+        const characterId = "NfDIpprUyKlmPxJS0DDwjgnrFGnETWOt0cOMUjRT4RY";
+        const chat = await characterAI.createOrContinueChat(characterId)
+
         const connection = joinVoiceChannel({
             channelId: interaction.options._hoistedOptions[0].value,
             guildId: interaction.commandGuildId,
@@ -95,14 +109,8 @@ module.exports = {
         })
 
         let vcData = {};
-
         connection.receiver.speaking.on('start', (userId) => {
-            if (userId != 1) return;
-
-            // console.log({
-            //     [userId]: 'Started Speaking.',
-            // });
-
+            // if (userId != 731459407216508949) return;
             vcData[userId] = {
                 buffer: [],
                 audioStream: connection.receiver.subscribe(userId)
@@ -120,12 +128,7 @@ module.exports = {
         })
 
         connection.receiver.speaking.on('end', async (userId) => {
-            if (userId != 1) return;
-
-            // console.log({
-            //     [userId]: 'Stopped Speaking.',
-            // });
-
+            // if (userId != 731459407216508949) return;
             const userVCData = vcData[userId]
 
             if (userVCData) {
@@ -142,17 +145,12 @@ module.exports = {
                             
                             if (out != null) {
                                 const speech_res = out.results.channels[0].alternatives[0].transcript;
-                                // const ai_res = await generateGoogleResponse(speech_res);
-                                // console.log(ai_res);
-                                // textToVoice(connection, ai_res);
-
-                                // console.log(`${user.globalName}: ${speech_res}`);
-
-                                // const res = await chat.sendAndAwaitResponse(speech_res, true);
-                                // textToVoice(connection, response.text());
+                                if (speech_res.length > 1) {
+                                    pushString(connection, chat, speech_res)
+                                }
                             };
                         } catch(e) {
-                            console.log(e);
+                            console.error(e);
                         }
                     }, 250)
                 } catch (e) {
@@ -174,7 +172,7 @@ async function convertAudioToText(audioFilePath) {
         audioFile,
         {
             smart_format: true,
-            model: "nova",
+            model: "nova-2",
         }
     )
 
@@ -185,7 +183,7 @@ async function convertAudioToText(audioFilePath) {
 }
 
 async function textToVoice(connection, textToSpeech) {
-    const voiceResponse = voice.textToSpeechStream({
+    const voiceResponse = await voice.textToSpeechStream({
         // Required Parameters
         textInput:       textToSpeech,                // The text you wish to convert to speech
     
@@ -197,14 +195,14 @@ async function textToVoice(connection, textToSpeech) {
         style:           1,                              // The style exaggeration for the converted speech
         responseType:    "stream"
       }).then(async (res) => {
-        const newFilePath = `C:\\Users\\Gebruiker\\Desktop\\GIT\\Tempy-Discord-BOT\\buffer_send_audio\\audio_${audioIndex}.mp3`
-        res.pipe(fs.createWriteStream(newFilePath)).on('finish', async () => {
+        const newFilePath = `C:\\Users\\Gebruiker\\Desktop\\GIT\\Tempy-Discord-BOT\\buffer_send_audio\\audio_response.mp3`
+        await res.pipe(fs.createWriteStream(newFilePath)).on('finish', async () => {
             const player = createAudioPlayer();
             const SoundEffect = createAudioResource(newFilePath);
         
             if (SoundEffect) {
                 player.play(SoundEffect);
-                connection.subscribe(player);
+                await connection.subscribe(player);
             }; 
         });
     });

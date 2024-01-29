@@ -15,7 +15,7 @@
     "fs-extra": "^11.2.0",
     "libsodium-wrappers": "^0.7.13",
     "music-metadata": "^7.14.0",
-    "node_characterai": "^1.2.1",
+    "node_characterai": "^1.2.4",
     "node-gyp-build": "^4.7.1",
     "node-witai-speech": "^1.0.2",
     "opus-stream-decoder": "^1.2.7",
