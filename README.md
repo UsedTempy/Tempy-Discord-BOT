@@ -91,8 +91,7 @@ Contributions are welcome! Feel free to fork the repository and submit a pull re
 
 ## 📧 Contact  
 If you have any questions or need assistance, please feel free to reach out:  
-- **Email**: your-email@example.com  
-- **GitHub**: [Your GitHub Profile](https://github.com/your-username)  
+- **GitHub**: [Tempy](https://github.com/usedtempy)  
 
 ---
 
