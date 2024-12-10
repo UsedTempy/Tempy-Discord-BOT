@@ -53,7 +53,7 @@ Replace `your_discord_bot_token`, `your_witai_token`, and `your_deepgram_api_key
 ## 🚀 Running the Bot  
 1. Clone the repository:  
    ```bash
-   git clone https://github.com/your-username/discord-ai-bot.git
+   git clone https://github.com/UsedTempy/Tempy-Discord-BOT
    cd discord-ai-bot
    ```
 2. Install dependencies:  
