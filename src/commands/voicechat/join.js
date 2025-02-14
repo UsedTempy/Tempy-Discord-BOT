@@ -97,7 +97,7 @@ module.exports = {
         let vcData = {};
 
         connection.receiver.speaking.on('start', (userId) => {
-            if (userId != 1) return;
+            // if (userId != 1) return;
 
             // console.log({
             //     [userId]: 'Started Speaking.',
@@ -120,7 +120,7 @@ module.exports = {
         })
 
         connection.receiver.speaking.on('end', async (userId) => {
-            if (userId != 1) return;
+            // if (userId != 1) return;
 
             // console.log({
             //     [userId]: 'Stopped Speaking.',
@@ -142,6 +142,7 @@ module.exports = {
                             
                             if (out != null) {
                                 const speech_res = out.results.channels[0].alternatives[0].transcript;
+                                console.log(speech_res);
                                 // const ai_res = await generateGoogleResponse(speech_res);
                                 // console.log(ai_res);
                                 // textToVoice(connection, ai_res);
